@@ -683,10 +683,6 @@ class BlueGigaClient(BlueGigaModule):
         self.procedure_complete(PROCEDURE, result=result)
         self.connections[connection].procedure_complete(PROCEDURE, result=result)
         self.connections[connection].procedure_complete(READ_ATTRIBUTE, result=result) # When the attribute read fails
-
-    def ble_rsp_attclient_attribute_write(self, connection, result):
-        super(BlueGigaClient, self).ble_rsp_attclient_attribute_write(connection, result)
-        self.procedure_complete(PROCEDURE, result=result)
         self.connections[connection].procedure_complete(WRITE_ATTRIBUTE, result=result)
 
 class BlueGigaServer(BlueGigaModule):
