@@ -258,6 +258,8 @@ class BlueGigaAPI(object):
         self.send_command(8, 4)
     def ble_cmd_test_debug(self, input):
         self.send_command(8, 5, struct.pack('<B' + str(len(input)) + 's', len(input), input))
+    def ble_cmd_test_channel_mode(self, mode):
+        self.send_command(8, 6, struct.pack('<B', mode))
 
     def parse_bgapi_packet(self, packet, callbacks=None):
         logger.debug('<=[ ' + hexlify_nice(packet) + ' ]')
@@ -530,6 +532,8 @@ class BlueGigaAPI(object):
                 callbacks.ble_rsp_test_get_channel_map(channel_map=rx_payload[1:])
             elif packet_command == 5:
                 callbacks.ble_rsp_test_debug(output=rx_payload[1:])
+            elif packet_command == 6:
+                callbacks.ble_rsp_test_channel_mode()
 
     def parse_bgapi_event(self, packet_class, packet_command, rx_payload, callbacks=None):
         if callbacks is None:
@@ -904,6 +908,9 @@ class BlueGigaCallbacks(object):
 
     def ble_rsp_test_debug(self, output):
         logger.info("RSP-Test Debug")
+
+    def ble_rsp_test_channel_mode(self):
+        logger.info("RSP-Test Channel Mode")
 
     def ble_evt_system_boot(self, major, minor, patch, build, ll_version, protocol_version, hw):
         logger.info("EVT-System Boot - Version:%d.%d.%d.%d - Link Layer Version:%d - Protocol Version:%d - hw:%d" %
