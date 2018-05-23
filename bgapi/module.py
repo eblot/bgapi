@@ -606,6 +606,10 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
             self.procedure_complete(CONNECT, result=result)
 
 class BlueGigaClient(BlueGigaModule):
+    def __init__(self, port, baud=115200, timeout=0.1):
+        super(BlueGigaClient, self).__init__(port, baud, timeout)
+        self._channel_map = b''
+
     def connect_by_adv_data(self, adv_data, scan_timeout=3, conn_interval_min=0x20, conn_interval_max=0x30, connection_timeout=100, latency=0):
         responses = self.scan_all(timeout=scan_timeout)
         for resp in responses:
