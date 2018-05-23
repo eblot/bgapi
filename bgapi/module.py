@@ -511,6 +511,22 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
             self._api.ble_cmd_system_address_get()
         return self.address
 
+    def reset(self):
+        self._api.ble_cmd_system_reset(0)
+        # some time is required after reset to get back to life
+        retries = 20
+        while retries:
+            retries -= 1
+            time.sleep(0.1)
+            try:
+                # use this simple request as a proof of life
+                self.get_ble_address()
+            except BlueGigaModuleException:
+                pass
+            else:
+                return
+        raise BlueGigaModuleException('Cannot recover after SW reset')
+
     def reset_ble_state(self):
         """ Disconnect, End Procedure, and Disable Advertising """
         self._api.ble_cmd_gap_set_mode(gap_discoverable_mode['gap_non_discoverable'],
