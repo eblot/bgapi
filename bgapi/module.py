@@ -13,7 +13,7 @@ from threading import Event, Lock
 
 from .api import BlueGigaAPI, BlueGigaCallbacks
 from .cmd_def import gap_discoverable_mode, gap_connectable_mode, gap_discover_mode, \
-    connection_status_mask, sm_io_capability, RESULT_CODE
+    connection_status_mask, sm_io_capability, ATTRIBUTE_VALUE_TYPE, RESULT_CODE
 
 logger = logging.getLogger(__name__)
 
@@ -366,7 +366,7 @@ class BLEConnection(ProcedureManager):
         if handle in self.handle_uuid:
             return self.handle_uuid[handle]
 
-    def update_handle(self, handle, value):
+    def update_handle(self, handle, value, uptype):
         if handle in self.handle_uuid:
             if self.handle_uuid[handle] == GATTCharacteristic.CHARACTERISTIC_UUID:
                 self.characteristics[handle] = GATTCharacteristic(handle, value)
@@ -379,7 +379,7 @@ class BLEConnection(ProcedureManager):
             raise BlueGigaModuleException("Attribute Value for Handle %d received with unknown UUID!" % (handle, ))
         if handle in self.attrclient_value_cb:
             try:
-                self.attrclient_value_cb[handle](value)
+                self.attrclient_value_cb[handle](value, uptype)
             except Exception:
                 logger.exception("Callback exception")
 
@@ -671,8 +671,10 @@ class BlueGigaClient(BlueGigaModule):
     def ble_evt_attclient_attribute_value(self, connection, atthandle, type, value):
         super(BlueGigaClient, self).ble_evt_attclient_attribute_value(connection, atthandle, type, value)
         if connection in self.connections:
-            self.connections[connection].update_handle(atthandle, value)
-            self.connections[connection].procedure_complete(READ_ATTRIBUTE, type)
+            uptype = ATTRIBUTE_VALUE_TYPE.get(type, 'Unknown')
+            self.connections[connection].update_handle(atthandle, value, uptype)
+            if uptype.startswith('Read'):
+                self.connections[connection].procedure_complete(READ_ATTRIBUTE)
 
     def ble_evt_attclient_group_found(self, connection, start, end, uuid):
         super(BlueGigaClient, self).ble_evt_attclient_group_found(connection, start, end, uuid)
