@@ -18,6 +18,7 @@ from .cmd_def import gap_discoverable_mode, gap_connectable_mode, gap_discover_m
 logger = logging.getLogger(__name__)
 
 GET_ADDRESS = "Read Address in Progress"
+GET_CONNECTIONS = "Get Connections in Progress"
 PROCEDURE = "Procedure in Progress"
 START_ENCRYPTION = "Start Encryption in Progress"
 READ_ATTRIBUTE = "Attribute Read in Progress"
@@ -486,6 +487,7 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
         self.connections = {}
         self._api.start_daemon()
         self.procedure_in_progress = False
+        self.maxconn = 0
 
     def pipe_logs_to_terminal(self, level=logging.INFO):
         term = logging.StreamHandler(sys.stdout)
@@ -510,6 +512,12 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
         with self.procedure_call(GET_ADDRESS, timeout) as handle:
             self._api.ble_cmd_system_address_get()
         return self.address
+
+    def get_ble_connections(self, timeout=1):
+        self.maxconn = 0
+        with self.procedure_call(GET_CONNECTIONS, timeout):
+            self._api.ble_cmd_system_get_connections()
+        return self.maxconn
 
     def reset_ble_state(self):
         """ Disconnect, End Procedure, and Disable Advertising """
@@ -560,6 +568,11 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
         super(BlueGigaModule, self).ble_rsp_system_address_get(address)
         self.address = address
         self.procedure_complete(GET_ADDRESS)
+
+    def ble_rsp_system_get_connections(self, maxconn):
+        super(BlueGigaModule, self).ble_rsp_system_get_connections(maxconn)
+        self.maxconn = maxconn
+        self.procedure_complete(GET_CONNECTIONS)
 
     def ble_evt_connection_status(self, connection, flags, address, address_type, conn_interval, timeout, latency, bonding):
         super(BlueGigaModule, self).ble_evt_connection_status(connection, flags, address, address_type, conn_interval, timeout, latency, bonding)
