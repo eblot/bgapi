@@ -474,6 +474,11 @@ class BLEConnection(ProcedureManager):
         with self.procedure_call(START_ENCRYPTION, timeout):
             self._api.ble_cmd_sm_encrypt_start(self.handle, 1 if bond else 0)
 
+    @connected
+    def set_connection_channel_map(self, chmap, timeout=1):
+        with self.procedure_call(PROCEDURE, timeout):
+            self._api.ble_cmd_connection_channel_map_set(self.handle, chmap)
+
 class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
     CONNECTION_OBJECT = BLEConnection
 
@@ -592,6 +597,11 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
         if connection in self.connections:
             self.connections[connection].set_disconnect(result)
         self.procedure_complete(DISCONNECT, result=result)
+
+    def ble_rsp_connection_channel_map_set(self, connection, result):
+        super(BlueGigaModule, self).ble_rsp_connection_channel_map_set(connection, result)
+        self.procedure_complete(PROCEDURE, result=result)
+        self.connections[connection].procedure_complete(PROCEDURE, result=result)
 
     def ble_evt_connection_disconnected(self, connection, reason):
         super(BlueGigaModule, self).ble_evt_connection_disconnected(connection, reason)
