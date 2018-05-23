@@ -641,6 +641,16 @@ class BlueGigaClient(BlueGigaModule):
             )
         return self.most_recent_connection
 
+    def get_channel_map(self, timeout=1.0):
+        self._channel_map = b''
+        with self.procedure_call(PROCEDURE, timeout):
+            self._api.ble_cmd_test_get_channel_map()
+        return self._channel_map
+
+    def set_test_channel_mode(self, mode, timeout=1.0):
+        with self.procedure_call(PROCEDURE, timeout):
+            self._api.ble_cmd_test_channel_mode(mode)
+
     def _scan(self, mode, timeout):
         self.scan_responses = None
         now = start = time.time()
@@ -655,6 +665,15 @@ class BlueGigaClient(BlueGigaModule):
         super(BlueGigaClient, self).ble_rsp_attclient_write_command(connection=connection, result=result)
         self.procedure_complete(PROCEDURE, result=result)
         self.connections[connection].procedure_complete(PROCEDURE, result=result)
+
+    def ble_rsp_test_get_channel_map(self, channel_map):
+        super(BlueGigaClient, self).ble_rsp_test_get_channel_map(channel_map)
+        self._channel_map = channel_map
+        self.procedure_complete(PROCEDURE)
+
+    def ble_rsp_test_channel_mode(self):
+        super(BlueGigaClient, self).ble_rsp_test_channel_mode()
+        self.procedure_complete(PROCEDURE)
 
     #----------------  Events triggered by incoming data ------------------#
 
