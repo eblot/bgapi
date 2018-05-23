@@ -483,11 +483,11 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
         self._api = BlueGigaAPI(port, callbacks=self, baud=baud, timeout=timeout)
         self.address = None
         self._module_info = None
+        self._maxconn = 0
         self.scan_responses = None
         self.connections = {}
         self._api.start_daemon()
         self.procedure_in_progress = False
-        self.maxconn = 0
 
     def pipe_logs_to_terminal(self, level=logging.INFO):
         term = logging.StreamHandler(sys.stdout)
@@ -514,10 +514,10 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
         return self.address
 
     def get_ble_connections(self, timeout=1):
-        self.maxconn = 0
+        self._maxconn = 0
         with self.procedure_call(GET_CONNECTIONS, timeout):
             self._api.ble_cmd_system_get_connections()
-        return self.maxconn
+        return self._maxconn
 
     def reset_ble_state(self):
         """ Disconnect, End Procedure, and Disable Advertising """
@@ -571,7 +571,7 @@ class BlueGigaModule(BlueGigaCallbacks, ProcedureManager):
 
     def ble_rsp_system_get_connections(self, maxconn):
         super(BlueGigaModule, self).ble_rsp_system_get_connections(maxconn)
-        self.maxconn = maxconn
+        self._maxconn = maxconn
         self.procedure_complete(GET_CONNECTIONS)
 
     def ble_evt_connection_status(self, connection, flags, address, address_type, conn_interval, timeout, latency, bonding):
